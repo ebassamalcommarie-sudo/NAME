@@ -1,0 +1,49 @@
+import { connection } from "next/server";
+import { createClient } from "@supabase/supabase-js";
+import { site } from "@/content/site";
+import { readSupabaseConfig } from "@/lib/supabase/config";
+
+// Page de vérification de la configuration : /diagnostic
+// N'affiche jamais le contenu des clés, seulement si elles sont présentes et valides.
+export async function GET() {
+  await connection();
+  const { url, publishableKey, secretKey, urlValid } = readSupabaseConfig();
+  const lines: string[] = ["DIAGNOSTIC AIRGÉ", ""];
+  const ok = (good: boolean, label: string, help = "") => lines.push(`${good ? "✅" : "❌"} ${label}${!good && help ? ` → ${help}` : ""}`);
+
+  ok(site.url.startsWith("https://"), `Adresse du site : ${site.url}`, "vérifie NEXT_PUBLIC_SITE_URL (ex. https://name-ebassa.vercel.app)");
+  ok(urlValid, "NEXT_PUBLIC_SUPABASE_URL", url ? "la valeur doit ressembler à https://xxxx.supabase.co" : "variable absente");
+  if (urlValid && !/\.supabase\.co$/.test(new URL(url).hostname)) {
+    lines.push("⚠️ L'URL Supabase ne finit pas par .supabase.co : vérifie que tu as copié le « Project URL », pas l'adresse du tableau de bord.");
+  }
+  ok(Boolean(publishableKey), "Clé publique Supabase (PUBLISHABLE_KEY ou ANON_KEY)", "variable absente");
+  ok(Boolean(secretKey), "Clé secrète Supabase (SECRET_KEY ou SERVICE_ROLE_KEY)", "variable absente");
+
+  if (urlValid && publishableKey) {
+    try {
+      const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: publishableKey }, cache: "no-store" });
+      ok(res.ok, "Connexion à Supabase avec la clé publique", `refusée (code ${res.status}) : la clé publique ou l'URL ne correspondent pas`);
+    } catch {
+      ok(false, "Connexion à Supabase", "impossible de joindre l'URL : vérifie NEXT_PUBLIC_SUPABASE_URL");
+    }
+  }
+
+  if (urlValid && secretKey) {
+    try {
+      const db = createClient(url, secretKey, { auth: { persistSession: false } });
+      const { error } = await db.from("orders").select("id", { head: true, count: "exact" });
+      if (!error) ok(true, "Base de données (tables créées)");
+      else if (/relation|does not exist|schema cache/i.test(error.message)) ok(false, "Base de données", "les tables n'existent pas : refais l'étape SQL Editor → Run");
+      else ok(false, "Clé secrète Supabase", `refusée (${error.message})`);
+    } catch {
+      ok(false, "Base de données", "erreur de connexion");
+    }
+  }
+
+  ok(Boolean((process.env.NOTCHPAY_PUBLIC_KEY ?? "").trim()), "Clé Notch Pay (paiements)", "pas encore ajoutée — normal pour l'instant");
+  ok(Boolean((process.env.ADMIN_EMAILS ?? "").trim()), "ADMIN_EMAILS (accès au tableau de bord)", "pas encore ajouté");
+
+  return new Response(lines.join("\n") + "\n", {
+    headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" },
+  });
+}
