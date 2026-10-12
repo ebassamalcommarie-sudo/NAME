@@ -1,0 +1,166 @@
+@import "tailwindcss";
+
+/* Palette tirée du logo Airgé (dégradé turquoise) */
+@theme {
+  --color-ink: #050e12;
+  --color-surface: #0a1a20;
+  --color-surface-2: #0f242c;
+  --color-line: rgb(102 227 232 / 0.14);
+  --color-text: #e8f7f8;
+  --color-muted: #8fb3b9;
+
+  --color-brand-700: #1b8296;
+  --color-brand-600: #2aa3b8;
+  --color-brand-500: #48c8d3;
+  --color-brand-400: #64e1e2;
+  --color-brand-300: #8feeee;
+  --color-brand-200: #b0f2f2;
+
+  --color-orange-money: #ff7900;
+  --color-mtn: #ffcb05;
+
+  --font-display: "Montserrat Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-shine: shine 6s linear infinite;
+  --animate-marquee: marquee 30s linear infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) }
+  50% { transform: translateY(-14px) }
+}
+
+@keyframes shine {
+  to { background-position: 200% center }
+}
+
+@keyframes marquee {
+  to { transform: translateX(-50%) }
+}
+
+html {
+  scroll-behavior: smooth;
+  color-scheme: dark;
+}
+
+body {
+  overflow-x: clip;
+  background: var(--color-ink);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+}
+
+::selection {
+  background: var(--color-brand-500);
+  color: var(--color-ink);
+}
+
+@utility text-gradient {
+  background-image: linear-gradient(100deg, var(--color-brand-600), var(--color-brand-400) 35%, var(--color-brand-200) 50%, var(--color-brand-400) 65%, var(--color-brand-600));
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+
+@utility bg-brand-gradient {
+  background-image: linear-gradient(110deg, var(--color-brand-600), var(--color-brand-400) 55%, var(--color-brand-200));
+}
+
+@utility card {
+  border: 1px solid var(--color-line);
+  background: linear-gradient(180deg, rgb(15 36 44 / 0.75), rgb(10 26 32 / 0.6));
+  border-radius: 1.5rem;
+}
+
+@utility container-page {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (width >= 40rem) {
+    padding-inline: 1.5rem;
+  }
+}
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.85rem 1.5rem;
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--color-ink);
+  background-image: linear-gradient(110deg, var(--color-brand-500), var(--color-brand-300));
+  box-shadow: 0 10px 30px -10px rgb(100 225 226 / 0.6);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  &:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 14px 36px -10px rgb(100 225 226 / 0.75); }
+  &:active { transform: scale(0.98); }
+  &:disabled { opacity: 0.6; pointer-events: none; }
+}
+
+@utility btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  padding: 0.85rem 1.5rem;
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-text);
+  border: 1px solid var(--color-line);
+  background: rgb(15 36 44 / 0.6);
+  transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+  &:hover { border-color: rgb(100 225 226 / 0.45); background: var(--color-surface-2); }
+  &:active { transform: scale(0.98); }
+}
+
+@utility eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-line);
+  background: rgb(15 36 44 / 0.6);
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-brand-300);
+}
+
+@utility field {
+  width: 100%;
+  border-radius: 0.9rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-ink);
+  padding: 0.8rem 1rem;
+  font-size: 1rem;
+  color: var(--color-text);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  &::placeholder { color: rgb(143 179 185 / 0.6); }
+  &:focus { outline: none; border-color: var(--color-brand-500); box-shadow: 0 0 0 3px rgb(72 200 211 / 0.2); }
+}
+
+/* Révélation au défilement (voir components/reveal.tsx) */
+html[data-js] [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+html[data-js] [data-reveal="shown"] {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  html[data-js] [data-reveal] { opacity: 1; transform: none; transition: none; }
+  *, *::before, *::after { animation: none !important; }
+}
+
+details > summary::-webkit-details-marker { display: none; }
