@@ -16,10 +16,26 @@ export async function GET() {
   if (urlValid && !/\.supabase\.co$/.test(new URL(url).hostname)) {
     lines.push("⚠️ L'URL Supabase ne finit pas par .supabase.co : vérifie que tu as copié le « Project URL », pas l'adresse du tableau de bord.");
   }
-  ok(Boolean(publishableKey), "Clé publique Supabase (PUBLISHABLE_KEY ou ANON_KEY)", "variable absente");
-  ok(Boolean(secretKey), "Clé secrète Supabase (SECRET_KEY ou SERVICE_ROLE_KEY)", "variable absente");
+  const keyIssue = (value: string, kind: "publique" | "secrète") => {
+    if (!value) return "variable absente";
+    const bad = [...value].findIndex((c) => c.charCodeAt(0) > 126 || c.charCodeAt(0) < 33);
+    if (bad >= 0) {
+      return `contient un caractère interdit « ${value[bad]} » (position ${bad + 1} sur ${value.length}) : la clé a été mal copiée. Recopie-la avec le bouton 📋 de Supabase`;
+    }
+    const looksPublic = value.startsWith("sb_publishable_");
+    const looksSecret = value.startsWith("sb_secret_");
+    if (kind === "publique" && looksSecret) return "c'est la clé SECRÈTE qui est collée ici : les deux clés sont inversées";
+    if (kind === "secrète" && looksPublic) return "c'est la clé PUBLIQUE qui est collée ici : les deux clés sont inversées";
+    if (!looksPublic && !looksSecret && !value.startsWith("eyJ")) return "ne ressemble pas à une clé Supabase (elle doit commencer par sb_publishable_, sb_secret_ ou eyJ)";
+    return "";
+  };
+  const publicIssue = keyIssue(publishableKey, "publique");
+  const secretIssue = keyIssue(secretKey, "secrète");
+  if (publishableKey && secretKey && publishableKey === secretKey) lines.push("❌ La clé publique et la clé secrète sont identiques : la clé secrète doit être différente");
+  ok(!publicIssue, "Clé publique Supabase (PUBLISHABLE_KEY ou ANON_KEY)", publicIssue);
+  ok(!secretIssue, "Clé secrète Supabase (SECRET_KEY ou SERVICE_ROLE_KEY)", secretIssue);
 
-  if (urlValid && publishableKey) {
+  if (urlValid && publishableKey && !publicIssue) {
     try {
       const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: publishableKey }, cache: "no-store" });
       ok(res.ok, "Connexion à Supabase avec la clé publique", `refusée (code ${res.status}) : la clé publique ou l'URL ne correspondent pas`);
@@ -28,7 +44,7 @@ export async function GET() {
     }
   }
 
-  if (urlValid && secretKey) {
+  if (urlValid && secretKey && !secretIssue) {
     try {
       const db = createClient(url, secretKey, { auth: { persistSession: false } });
       const { error } = await db.from("orders").select("id", { head: true, count: "exact" });
