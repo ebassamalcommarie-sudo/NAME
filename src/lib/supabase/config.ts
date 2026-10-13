@@ -7,7 +7,9 @@ function clean(value: string | undefined) {
 }
 
 export function readSupabaseConfig() {
-  const url = clean(process.env.NEXT_PUBLIC_SUPABASE_URL).replace(/\/+$/, "");
+  const raw = clean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  // Garde seulement « https://xxxx.supabase.co » même si une fin (/rest/v1…) a été collée.
+  const url = isValidSupabaseUrl(raw) ? new URL(raw).origin : raw;
   const publishableKey = clean(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) || clean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const secretKey = clean(process.env.SUPABASE_SECRET_KEY) || clean(process.env.SUPABASE_SERVICE_ROLE_KEY);
   return { url, publishableKey, secretKey, urlValid: isValidSupabaseUrl(url) };

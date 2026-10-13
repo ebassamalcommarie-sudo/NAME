@@ -13,8 +13,16 @@ export async function GET() {
 
   ok(site.url.startsWith("https://"), `Adresse du site : ${site.url}`, "vérifie NEXT_PUBLIC_SITE_URL (ex. https://name-ebassa.vercel.app)");
   ok(urlValid, "NEXT_PUBLIC_SUPABASE_URL", url ? "la valeur doit ressembler à https://xxxx.supabase.co" : "variable absente");
-  if (urlValid && !/\.supabase\.co$/.test(new URL(url).hostname)) {
-    lines.push("⚠️ L'URL Supabase ne finit pas par .supabase.co : vérifie que tu as copié le « Project URL », pas l'adresse du tableau de bord.");
+  if (urlValid) {
+    // L'adresse du projet n'est pas secrète : on l'affiche pour pouvoir la comparer.
+    lines.push(`   Adresse lue : ${url}`);
+    const badChar = [...url].find((c) => c.charCodeAt(0) > 126 || c.charCodeAt(0) < 33);
+    const { hostname, pathname } = new URL(url);
+    if (badChar) lines.push(`❌ L'adresse contient un caractère interdit « ${badChar} » : recopie le Project URL avec le bouton 📋`);
+    else if (!/^[a-z0-9]{20}\.supabase\.co$/.test(hostname)) {
+      lines.push("⚠️ Une adresse Supabase a la forme https://(20 lettres).supabase.co : compare avec le « Project URL » de Supabase (Project Settings → Data API)");
+    }
+    if (pathname !== "/") lines.push("⚠️ L'adresse ne doit rien contenir après « .supabase.co » : enlève la fin (ex. /rest/v1)");
   }
   const keyIssue = (value: string, kind: "publique" | "secrète") => {
     if (!value) return "variable absente";
@@ -39,8 +47,10 @@ export async function GET() {
     try {
       const res = await fetch(`${url}/auth/v1/settings`, { headers: { apikey: publishableKey }, cache: "no-store" });
       ok(res.ok, "Connexion à Supabase avec la clé publique", `refusée (code ${res.status}) : la clé publique ou l'URL ne correspondent pas`);
-    } catch {
-      ok(false, "Connexion à Supabase", "impossible de joindre l'URL : vérifie NEXT_PUBLIC_SUPABASE_URL");
+    } catch (e) {
+      const code = (e as { cause?: { code?: string } }).cause?.code;
+      const why = code === "ENOTFOUND" ? "cette adresse n'existe pas (faute de frappe, ou projet supprimé/en pause)" : `injoignable${code ? ` (${code})` : ""}`;
+      ok(false, "Connexion à Supabase", `${why} : vérifie NEXT_PUBLIC_SUPABASE_URL et que le projet est actif dans Supabase`);
     }
   }
 
@@ -49,6 +59,7 @@ export async function GET() {
       const db = createClient(url, secretKey, { auth: { persistSession: false } });
       const { error } = await db.from("orders").select("id", { head: true, count: "exact" });
       if (!error) ok(true, "Base de données (tables créées)");
+      else if (/fetch failed/i.test(error.message)) ok(false, "Base de données", "injoignable : même problème d'adresse que ci-dessus");
       else if (/relation|does not exist|schema cache/i.test(error.message)) ok(false, "Base de données", "les tables n'existent pas : refais l'étape SQL Editor → Run");
       else ok(false, "Clé secrète Supabase", `refusée (${error.message})`);
     } catch {
