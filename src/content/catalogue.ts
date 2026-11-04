@@ -174,7 +174,7 @@ export const specials: Special[] = [
         title: "Créer ton avatar IA avec Higgsfield et Claude",
         summary: "De la photo à la vidéo publiée : toutes les étapes, pas à pas.",
         duration: "5 min",
-        bunnyVideoId: "",
+        bunnyVideoId: "4afeb282-49af-441c-abcf-37840b50fa1c",
       },
     ],
   },

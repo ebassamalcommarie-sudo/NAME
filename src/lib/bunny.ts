@@ -9,7 +9,7 @@ import { env } from "@/lib/env";
  */
 export function signedEmbedUrl(videoId: string, ttlSeconds = 4 * 60 * 60) {
   if (!env.bunnyLibraryId || !videoId) return null;
-  const url = new URL(`https://iframe.mediadelivery.net/embed/${env.bunnyLibraryId}/${videoId}`);
+  const url = new URL(`https://player.mediadelivery.net/embed/${env.bunnyLibraryId}/${videoId}`);
   if (env.bunnyTokenKey) {
     const expires = Math.floor(Date.now() / 1000) + ttlSeconds;
     const token = createHash("sha256").update(env.bunnyTokenKey + videoId + expires).digest("hex");

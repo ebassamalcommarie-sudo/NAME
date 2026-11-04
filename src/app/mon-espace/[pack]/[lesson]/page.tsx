@@ -52,7 +52,7 @@ async function Lesson({ params }: { params: Params }) {
               title={lesson.title}
               loading="lazy"
               className="absolute inset-0 size-full"
-              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture"
+              allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture; fullscreen"
               allowFullScreen
             />
           ) : (
