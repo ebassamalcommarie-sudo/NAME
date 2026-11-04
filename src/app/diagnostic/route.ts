@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { site } from "@/content/site";
-import { specials } from "@/content/catalogue";
+import { courses, specials } from "@/content/catalogue";
 import { readSupabaseConfig } from "@/lib/supabase/config";
 
 // Page de vérification de la configuration : /diagnostic
@@ -82,6 +82,9 @@ export async function GET() {
 
   ok(Boolean((process.env.NOTCHPAY_PUBLIC_KEY ?? "").trim()), "Clé Notch Pay (paiements)", "pas encore ajoutée — normal pour l'instant");
   ok(Boolean((process.env.ADMIN_EMAILS ?? "").trim()), "ADMIN_EMAILS (accès au tableau de bord)", "pas encore ajouté");
+  ok(Boolean((process.env.BUNNY_STREAM_TOKEN_KEY ?? "").trim()), "Clé de protection des vidéos (BUNNY_STREAM_TOKEN_KEY)", "pas encore ajoutée : les vidéos ne sont pas protégées");
+  const missingVideos = courses.flatMap((c) => c.lessons).filter((l) => !l.bunnyVideoId).length;
+  lines.push(`ℹ️ Vidéos branchées : ${courses.flatMap((c) => c.lessons).length - missingVideos} sur ${courses.flatMap((c) => c.lessons).length}`);
 
   return new Response(lines.join("\n") + "\n", {
     headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store", "X-Robots-Tag": "noindex" },

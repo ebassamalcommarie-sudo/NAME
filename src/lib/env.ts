@@ -14,8 +14,9 @@ export const env = {
   supabaseSecretKey: supabase.secretKey,
   notchpayPublicKey: (process.env.NOTCHPAY_PUBLIC_KEY ?? "").trim(),
   notchpayHashKey: process.env.NOTCHPAY_HASH_KEY ?? "",
-  bunnyLibraryId: process.env.BUNNY_STREAM_LIBRARY_ID ?? "",
-  bunnyTokenKey: process.env.BUNNY_STREAM_TOKEN_KEY ?? "",
+  // Numéro (non secret) de la bibliothèque Bunny Stream « airge-formations ».
+  bunnyLibraryId: (process.env.BUNNY_STREAM_LIBRARY_ID ?? "").trim() || "799718",
+  bunnyTokenKey: (process.env.BUNNY_STREAM_TOKEN_KEY ?? "").trim(),
   adminEmails: (process.env.ADMIN_EMAILS ?? "")
     .split(",")
     .map((e) => e.trim().toLowerCase())
