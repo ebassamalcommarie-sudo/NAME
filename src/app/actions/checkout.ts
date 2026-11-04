@@ -2,8 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { CURRENCY, isProductId, products } from "@/content/catalogue";
-import { env, isPaymentConfigured } from "@/lib/env";
-import { getCurrentUser } from "@/lib/auth";
+import { env, isPaymentConfigured, isPaymentTestMode } from "@/lib/env";
+import { getCurrentUser, isAdmin } from "@/lib/auth";
 import { initializePayment } from "@/lib/notchpay";
 import { getOwnedCourseIds, newReference } from "@/lib/orders";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -23,6 +23,11 @@ export async function startCheckout(_: CheckoutState, formData: FormData): Promi
 
   const user = await getCurrentUser();
   if (!user) redirect(`/connexion?next=${encodeURIComponent(returnTo.startsWith("/") ? returnTo : "/formations")}`);
+
+  // En mode test, un paiement fictif donnerait un accès gratuit : seuls les administrateurs peuvent tester.
+  if (isPaymentTestMode() && !isAdmin(user)) {
+    return { error: "Les inscriptions ouvrent très bientôt ! Écris-nous sur WhatsApp pour réserver ta place." };
+  }
 
   const product = products[productId];
   const owned = await getOwnedCourseIds(user.id);

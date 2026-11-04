@@ -81,6 +81,9 @@ export async function GET() {
   }
 
   ok(Boolean((process.env.NOTCHPAY_PUBLIC_KEY ?? "").trim()), "Clé Notch Pay (paiements)", "pas encore ajoutée — normal pour l'instant");
+  if ((process.env.NOTCHPAY_PUBLIC_KEY ?? "").trim().toLowerCase().startsWith("pk_test")) {
+    lines.push("ℹ️ Notch Pay en mode TEST : seuls les emails de ADMIN_EMAILS peuvent acheter (paiements fictifs). Remplace par la clé live pour vendre.");
+  }
   ok(Boolean((process.env.ADMIN_EMAILS ?? "").trim()), "ADMIN_EMAILS (accès au tableau de bord)", "pas encore ajouté");
   ok(Boolean((process.env.BUNNY_STREAM_TOKEN_KEY ?? "").trim()), "Clé de protection des vidéos (BUNNY_STREAM_TOKEN_KEY)", "pas encore ajoutée : les vidéos ne sont pas protégées");
   const missingVideos = courses.flatMap((c) => c.lessons).filter((l) => !l.bunnyVideoId).length;

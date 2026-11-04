@@ -24,4 +24,6 @@ export const env = {
 };
 
 export const isSupabaseConfigured = () => Boolean(supabase.urlValid && env.supabasePublishableKey);
+/** Clé Notch Pay de test : les paiements sont fictifs, l'achat est donc réservé aux administrateurs. */
+export const isPaymentTestMode = () => env.notchpayPublicKey.toLowerCase().startsWith("pk_test");
 export const isPaymentConfigured = () => Boolean(env.notchpayPublicKey && env.supabaseSecretKey && isSupabaseConfigured());
