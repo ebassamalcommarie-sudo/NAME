@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { ArrowRight, Bot, CirclePlay, GraduationCap, Heart, MessageCircle, Rocket, ShieldCheck, Sparkles, Zap } from "lucide-react";
-import { packs } from "@/content/catalogue";
+import { PACKS_AVAILABLE, packs, specials } from "@/content/catalogue";
 import { services } from "@/content/services";
 import { formationFaq } from "@/content/faq";
 import { whatsappLink } from "@/content/site";
 import { PaymentMethods } from "@/components/payment-methods";
 import { Reveal } from "@/components/reveal";
-import { BundleCard, Faq, PackCard, SectionHeading, ServiceIcon } from "@/components/ui";
+import { BundleCard, Faq, PackCard, SectionHeading, ServiceIcon, SpecialCard } from "@/components/ui";
 
 const keywords = ["Création de contenu", "TikTok", "Instagram", "Facebook", "Intelligence artificielle", "Publicité", "Branding", "WhatsApp Business"];
 
@@ -106,6 +106,17 @@ export default function Home() {
         </div>
       </div>
 
+      {/* FORMATION DU MOIS */}
+      {specials
+        .filter((s) => s.available)
+        .slice(0, 1)
+        .map((s) => (
+          <section key={s.id} className="container-page pt-20 sm:pt-28">
+            <SectionHeading eyebrow="Nouveau ce mois-ci" title={<>La formation <span className="text-gradient">du mois</span></>} />
+            <SpecialCard special={s} />
+          </section>
+        ))}
+
       {/* DEUX CHEMINS */}
       <section className="container-page py-20 sm:py-28">
         <SectionHeading eyebrow="Deux façons d'avancer avec Airgé" title="Apprends à le faire, ou laisse-nous le faire pour toi." center />
@@ -115,10 +126,10 @@ export default function Home() {
               <GraduationCap className="size-10 text-brand-400" aria-hidden />
               <h3 className="font-display text-2xl font-bold">Les formations</h3>
               <p className="text-muted">
-                16 vidéos en 4 packs pour maîtriser la création de contenu et le marketing sur les réseaux sociaux, à ton rythme.
+                Des formations courtes et concrètes sur la création de contenu, les réseaux sociaux et l&apos;IA, à suivre à ton rythme.
               </p>
               <span className="mt-auto inline-flex items-center gap-2 font-semibold text-brand-300">
-                Voir les packs <ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden />
+                Voir les formations <ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden />
               </span>
             </Link>
           </Reveal>
@@ -185,8 +196,13 @@ export default function Home() {
       {/* FORMATIONS */}
       <section className="border-y border-line bg-surface/30 py-20 sm:py-28">
         <div className="container-page">
-          <SectionHeading eyebrow="Les formations" title={<>4 packs. 16 vidéos. <span className="text-gradient">Un vrai plan.</span></>}>
-            Choisis le pack dont tu as besoin, ou prends le parcours complet. Accès immédiat et à vie.
+          <SectionHeading
+            eyebrow={PACKS_AVAILABLE ? "Le parcours complet" : "Le parcours complet · Bientôt disponible"}
+            title={<>4 packs. 16 vidéos. <span className="text-gradient">Un vrai plan.</span></>}
+          >
+            {PACKS_AVAILABLE
+              ? "Choisis le pack dont tu as besoin, ou prends le parcours complet. Accès immédiat et à vie."
+              : "Le parcours complet arrive bientôt. Sois le premier informé de son lancement."}
           </SectionHeading>
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {packs.map((p, i) => (
@@ -204,7 +220,7 @@ export default function Home() {
         <SectionHeading eyebrow="Simple et rapide" title="Accède à ta formation en 2 minutes." center />
         <ol className="grid gap-5 md:grid-cols-3">
           {[
-            { t: "Choisis ton pack", d: "Un pack à 9 900 FCFA ou les 16 vidéos à 34 900 FCFA." },
+            { t: "Choisis ta formation", d: "La formation du mois ou un pack, à partir de 9 900 FCFA." },
             { t: "Paie comme tu veux", d: "Orange Money, MTN MoMo ou carte bancaire, en toute sécurité." },
             { t: "Regarde tout de suite", d: "Tes vidéos t'attendent dans ton espace élève, sur mobile et ordinateur." },
           ].map((s, i) => (

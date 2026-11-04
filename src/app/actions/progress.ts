@@ -1,14 +1,14 @@
 "use server";
 
 import { refresh } from "next/cache";
-import { packs } from "@/content/catalogue";
+import { isKnownLessonId } from "@/content/catalogue";
 import { getCurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 export async function setLessonCompleted(lessonId: string, completed: boolean) {
   const user = await getCurrentUser();
   if (!user) return;
-  if (!packs.some((p) => p.lessons.some((l) => l.id === lessonId))) return;
+  if (!isKnownLessonId(lessonId)) return;
 
   const supabase = await createClient();
   if (completed) {

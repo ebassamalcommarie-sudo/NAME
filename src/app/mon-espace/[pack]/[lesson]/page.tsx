@@ -3,10 +3,10 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowLeft, ArrowRight, CircleCheck, Clapperboard, PlayCircle } from "lucide-react";
-import { getPackBySlug } from "@/content/catalogue";
+import { getCourseBySlug } from "@/content/catalogue";
 import { requireUser } from "@/lib/auth";
 import { signedEmbedUrl } from "@/lib/bunny";
-import { getOwnedPackIds } from "@/lib/orders";
+import { getOwnedCourseIds } from "@/lib/orders";
 import { getCompletedLessonIds } from "@/lib/progress";
 import { CompleteToggle } from "@/components/complete-toggle";
 
@@ -26,13 +26,13 @@ export default function LessonPage({ params }: PageProps<"/mon-espace/[pack]/[le
 
 async function Lesson({ params }: { params: Params }) {
   const { pack: packSlug, lesson: lessonId } = await params;
-  const pack = getPackBySlug(packSlug);
+  const pack = getCourseBySlug(packSlug);
   const index = pack?.lessons.findIndex((l) => l.id === lessonId) ?? -1;
   if (!pack || index < 0) notFound();
 
   const user = await requireUser(`/mon-espace/${packSlug}/${lessonId}`);
-  const [owned, completed] = await Promise.all([getOwnedPackIds(user.id), getCompletedLessonIds(user.id)]);
-  if (!owned.has(pack.id)) redirect(`/formations/${pack.slug}`);
+  const [owned, completed] = await Promise.all([getOwnedCourseIds(user.id), getCompletedLessonIds(user.id)]);
+  if (!owned.has(pack.id)) redirect(pack.salesHref);
 
   const lesson = pack.lessons[index];
   const prev = pack.lessons[index - 1];
@@ -68,7 +68,8 @@ async function Lesson({ params }: { params: Params }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-semibold text-brand-300">
-              Pack {pack.number} · Vidéo {index + 1}/{pack.lessons.length}
+              {pack.label}
+              {pack.lessons.length > 1 && ` · Vidéo ${index + 1}/${pack.lessons.length}`}
             </p>
             <h1 className="mt-1 font-display text-2xl font-extrabold sm:text-3xl">{lesson.title}</h1>
             <p className="mt-2 text-muted">{lesson.summary}</p>
@@ -93,7 +94,7 @@ async function Lesson({ params }: { params: Params }) {
 
       <aside className="card h-fit overflow-hidden lg:sticky lg:top-24">
         <div className="border-b border-line px-5 py-4">
-          <p className="text-xs font-semibold tracking-wide text-brand-300 uppercase">Pack {pack.number}</p>
+          <p className="text-xs font-semibold tracking-wide text-brand-300 uppercase">{pack.label}</p>
           <p className="font-display font-bold">{pack.title}</p>
         </div>
         <ol className="divide-y divide-line">

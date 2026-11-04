@@ -1,4 +1,5 @@
-// Catalogue des formations : 4 packs de 4 vidéos + le pack complet.
+// Catalogue des formations : les formations spéciales (une vidéo, vendues seules)
+// + 4 packs de 4 vidéos + le pack complet.
 //
 // Pour brancher une vidéo : envoie-la sur Bunny Stream, copie son "Video ID"
 // (ex. "3f2c1a9e-...") et colle-le dans `bunnyVideoId` de la leçon.
@@ -24,7 +25,14 @@ export type Pack = {
 };
 
 export type PackId = "pack-1" | "pack-2" | "pack-3" | "pack-4";
-export type ProductId = PackId | "bundle";
+export type SpecialId = "special-avatar-ia";
+/** Tout ce qui donne accès à des vidéos : un pack ou une formation spéciale. */
+export type CourseId = PackId | SpecialId;
+export type ProductId = CourseId | "bundle";
+
+// Passe à `true` quand les 16 vidéos des packs sont en ligne sur Bunny Stream.
+// Tant que c'est `false`, les packs s'affichent « Bientôt disponible » et ne peuvent pas être achetés.
+export const PACKS_AVAILABLE = false;
 
 export const PACK_PRICE = 9900;
 export const BUNDLE_PRICE = 34900;
@@ -117,6 +125,61 @@ export const packs: Pack[] = [
   },
 ];
 
+export type Special = {
+  id: SpecialId;
+  slug: string;
+  badge: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  tools: string[];
+  duration: string;
+  price: number;
+  /** `false` pour retirer la formation de la vente sans la supprimer. */
+  available: boolean;
+  outcomes: string[];
+  audience: string[];
+  lessons: Lesson[];
+};
+
+// Formations spéciales : une nouvelle chaque mois. Pour en ajouter une, copie le bloc
+// ci-dessous, change l'id (ajoute-le aussi à SpecialId), le slug, les textes et le prix.
+export const specials: Special[] = [
+  {
+    id: "special-avatar-ia",
+    slug: "avatar-ia-higgsfield-claude",
+    badge: "Formation du mois",
+    title: "Crée ton avatar IA avec Higgsfield et Claude",
+    subtitle: "Ton double virtuel qui parle à ta place, en 5 minutes de vidéo",
+    description:
+      "Apprends à créer un avatar IA réaliste avec Higgsfield, à lui écrire des scripts percutants avec Claude, puis à le faire parler dans des vidéos prêtes pour TikTok, Reels et WhatsApp. Idéal pour publier tous les jours sans passer des heures devant la caméra.",
+    tools: ["Higgsfield", "Claude"],
+    duration: "5 min",
+    price: 9900,
+    available: true,
+    outcomes: [
+      "Créer ton avatar IA à partir de tes photos",
+      "Écrire des scripts qui accrochent avec Claude",
+      "Faire parler ton avatar dans une vidéo",
+      "Exporter au bon format pour TikTok et Reels",
+    ],
+    audience: [
+      "Entrepreneurs qui veulent publier sans se filmer tous les jours",
+      "Créateurs de contenu qui veulent produire plus vite",
+      "Agences et freelances qui veulent proposer un nouveau service",
+    ],
+    lessons: [
+      {
+        id: "sp-avatar-l1",
+        title: "Créer ton avatar IA avec Higgsfield et Claude",
+        summary: "De la photo à la vidéo publiée : toutes les étapes, pas à pas.",
+        duration: "5 min",
+        bunnyVideoId: "",
+      },
+    ],
+  },
+];
+
 export const bundle = {
   id: "bundle" as const,
   slug: "pack-complet",
@@ -130,16 +193,24 @@ export type Product = {
   id: ProductId;
   title: string;
   price: number;
-  packIds: PackId[];
+  /** Les formations auxquelles l'achat donne accès. */
+  courseIds: CourseId[];
+  available: boolean;
 };
 
-export const products: Record<ProductId, Product> = {
-  "pack-1": { id: "pack-1", title: `Pack 1 — ${packs[0].title}`, price: PACK_PRICE, packIds: ["pack-1"] },
-  "pack-2": { id: "pack-2", title: `Pack 2 — ${packs[1].title}`, price: PACK_PRICE, packIds: ["pack-2"] },
-  "pack-3": { id: "pack-3", title: `Pack 3 — ${packs[2].title}`, price: PACK_PRICE, packIds: ["pack-3"] },
-  "pack-4": { id: "pack-4", title: `Pack 4 — ${packs[3].title}`, price: PACK_PRICE, packIds: ["pack-4"] },
-  bundle: { id: "bundle", title: bundle.title, price: BUNDLE_PRICE, packIds: ["pack-1", "pack-2", "pack-3", "pack-4"] },
-};
+const packProduct = (pack: Pack): Product => ({
+  id: pack.id,
+  title: `Pack ${pack.number} — ${pack.title}`,
+  price: PACK_PRICE,
+  courseIds: [pack.id],
+  available: PACKS_AVAILABLE,
+});
+
+export const products = {
+  ...Object.fromEntries(packs.map((p) => [p.id, packProduct(p)])),
+  ...Object.fromEntries(specials.map((s) => [s.id, { id: s.id, title: s.title, price: s.price, courseIds: [s.id], available: s.available }])),
+  bundle: { id: "bundle", title: bundle.title, price: BUNDLE_PRICE, courseIds: packs.map((p) => p.id), available: PACKS_AVAILABLE },
+} as Record<ProductId, Product>;
 
 export const BUNDLE_SAVINGS = PACK_PRICE * packs.length - BUNDLE_PRICE;
 
@@ -153,6 +224,26 @@ export function getPackBySlug(slug: string) {
 
 export function getPackById(id: string) {
   return packs.find((p) => p.id === id);
+}
+
+export function getSpecialBySlug(slug: string) {
+  return specials.find((s) => s.slug === slug);
+}
+
+/** Vue commune d'un pack ou d'une formation spéciale, pour l'espace élève. */
+export type Course = { id: CourseId; slug: string; label: string; title: string; lessons: Lesson[]; salesHref: string };
+
+export const courses: Course[] = [
+  ...specials.map((s) => ({ id: s.id, slug: s.slug, label: s.badge, title: s.title, lessons: s.lessons, salesHref: `/formations/speciales/${s.slug}` })),
+  ...packs.map((p) => ({ id: p.id, slug: p.slug, label: `Pack ${p.number}`, title: p.title, lessons: p.lessons, salesHref: `/formations/${p.slug}` })),
+];
+
+export function getCourseBySlug(slug: string) {
+  return courses.find((c) => c.slug === slug);
+}
+
+export function isKnownLessonId(lessonId: string) {
+  return courses.some((c) => c.lessons.some((l) => l.id === lessonId));
 }
 
 export function formatFCFA(amount: number) {

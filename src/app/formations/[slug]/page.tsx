@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, Infinity as InfinityIcon, PlayCircle, Smartphone, Zap } from "lucide-react";
-import { BUNDLE_PRICE, BUNDLE_SAVINGS, PACK_PRICE, bundle, formatFCFA, getPackBySlug, packs } from "@/content/catalogue";
+import { BUNDLE_PRICE, BUNDLE_SAVINGS, PACKS_AVAILABLE, PACK_PRICE, bundle, formatFCFA, getPackBySlug, packs, specials } from "@/content/catalogue";
 import { BuyButton } from "@/components/buy-button";
 import { PaymentMethods } from "@/components/payment-methods";
 import { Reveal } from "@/components/reveal";
+import { NotifyButton } from "@/components/ui";
 
 export function generateStaticParams() {
   return [...packs.map((p) => ({ slug: p.slug })), { slug: bundle.slug }];
@@ -17,6 +18,9 @@ export async function generateMetadata({ params }: PageProps<"/formations/[slug]
   const pack = getPackBySlug(slug);
   return pack ? { title: `Pack ${pack.number} — ${pack.title}`, description: pack.description } : {};
 }
+
+const featuredSpecial = specials.find((s) => s.available);
+const featuredSpecialHref = featuredSpecial ? `/formations/speciales/${featuredSpecial.slug}` : "/formations";
 
 const perks = [
   { icon: Zap, text: "Accès immédiat après paiement" },
@@ -55,7 +59,7 @@ export default async function PackPage({ params }: PageProps<"/formations/[slug]
               <div className="flex items-center justify-between gap-4 rounded-3xl border border-line bg-surface/70 p-4 lg:hidden">
                 <p className="font-display text-2xl font-extrabold text-gradient">{formatFCFA(price)}</p>
                 <a href="#acheter" className="btn-primary !py-2.5 text-sm">
-                  Acheter
+                  {PACKS_AVAILABLE ? "Acheter" : "Bientôt"}
                 </a>
               </div>
             </header>
@@ -115,7 +119,19 @@ export default async function PackPage({ params }: PageProps<"/formations/[slug]
                   </p>
                 )}
               </div>
-              <BuyButton productId={productId} returnTo={`/formations/${slug}`} label="Acheter maintenant" />
+              {PACKS_AVAILABLE ? (
+                <BuyButton productId={productId} returnTo={`/formations/${slug}`} label="Acheter maintenant" />
+              ) : (
+                <div className="space-y-3">
+                  <p className="rounded-2xl border border-mtn/30 bg-mtn/10 px-4 py-3 text-sm text-mtn">
+                    Bientôt disponible. En attendant, découvre la formation du mois !
+                  </p>
+                  <Link href={featuredSpecialHref} className="btn-primary w-full justify-center">
+                    Voir la formation du mois
+                  </Link>
+                  <NotifyButton subject={isBundle ? "le pack complet" : `le pack ${pack!.number}`} />
+                </div>
+              )}
               <ul className="space-y-3 border-t border-line pt-6 text-sm">
                 {perks.map(({ icon: Icon, text }) => (
                   <li key={text} className="flex items-center gap-3 text-text/85">
@@ -125,7 +141,7 @@ export default async function PackPage({ params }: PageProps<"/formations/[slug]
               </ul>
               <PaymentMethods compact />
             </div>
-            {!isBundle && (
+            {!isBundle && PACKS_AVAILABLE && (
               <Link
                 href={`/formations/${bundle.slug}`}
                 className="mt-4 block rounded-3xl border border-brand-400/30 bg-brand-400/5 p-5 text-sm transition hover:bg-brand-400/10"

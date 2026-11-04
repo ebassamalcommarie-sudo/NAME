@@ -6,7 +6,7 @@ create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   email text not null,
-  product_id text not null check (product_id in ('pack-1', 'pack-2', 'pack-3', 'pack-4', 'bundle')),
+  product_id text not null, -- pack-1…pack-4, bundle ou une formation spéciale (vérifié par le site)
   amount integer not null check (amount > 0),
   currency text not null default 'XAF',
   reference text not null unique,
@@ -18,14 +18,18 @@ create table if not exists public.orders (
 create index if not exists orders_user_id_idx on public.orders (user_id);
 create index if not exists orders_status_idx on public.orders (status, created_at desc);
 
--- Accès aux packs (créé automatiquement après un paiement confirmé)
+-- Accès aux formations (créé automatiquement après un paiement confirmé)
 create table if not exists public.enrollments (
   user_id uuid not null references auth.users (id) on delete cascade,
-  pack_id text not null check (pack_id in ('pack-1', 'pack-2', 'pack-3', 'pack-4')),
+  pack_id text not null, -- un pack ou une formation spéciale
   order_id uuid references public.orders (id) on delete set null,
   created_at timestamptz not null default now(),
   primary key (user_id, pack_id)
 );
+
+-- Anciennes versions : retire les listes fixes de produits (voir migrations/002).
+alter table public.orders drop constraint if exists orders_product_id_check;
+alter table public.enrollments drop constraint if exists enrollments_pack_id_check;
 
 -- Progression des élèves (vidéos terminées)
 create table if not exists public.lesson_progress (

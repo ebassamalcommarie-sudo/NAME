@@ -13,11 +13,11 @@ export const formationFaq = [
   },
   {
     q: "Je débute complètement, c'est pour moi ?",
-    a: "Oui. Le Pack 1 part de zéro. Si tu veux tout le parcours, le pack complet des 16 vidéos est la meilleure option.",
+    a: "Oui. Les formations expliquent tout pas à pas, sans jargon. La formation du mois est un excellent point de départ : courte, concrète et directement applicable.",
   },
   {
-    q: "Je peux acheter un seul pack puis les autres plus tard ?",
-    a: "Bien sûr. Chaque pack est vendu séparément à 9 900 FCFA. Le pack complet à 34 900 FCFA te fait économiser 4 700 FCFA.",
+    q: "C'est quoi, la formation du mois ?",
+    a: "Chaque mois, une formation courte sur un outil ou une technique du moment (par exemple créer un avatar IA). Tu l'achètes une fois et tu la gardes à vie, même après la fin du mois.",
   },
   {
     q: "J'ai payé mais je ne vois pas ma formation, que faire ?",

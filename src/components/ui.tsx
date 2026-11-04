@@ -1,8 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowRight, Camera, Check, Compass, Palette, PlayCircle, Sparkles, Target, Users } from "lucide-react";
+import { ArrowRight, Camera, Check, Clock, Compass, Palette, PlayCircle, Sparkles, Target, Users } from "lucide-react";
 import type { Service } from "@/content/services";
-import { BUNDLE_PRICE, BUNDLE_SAVINGS, PACK_PRICE, bundle, formatFCFA, packs, type Pack } from "@/content/catalogue";
+import { BUNDLE_PRICE, BUNDLE_SAVINGS, PACKS_AVAILABLE, PACK_PRICE, bundle, formatFCFA, packs, type Pack, type Special } from "@/content/catalogue";
+import { whatsappLink } from "@/content/site";
 import { Reveal } from "./reveal";
 
 const serviceIcons = {
@@ -49,9 +50,13 @@ export function PackCard({ pack, delay = 0 }: { pack: Pack; delay?: number }) {
         <div className="pointer-events-none absolute -top-24 -right-24 size-56 rounded-full bg-brand-500/10 blur-3xl transition group-hover:bg-brand-400/20" />
         <div className="mb-6 flex items-center justify-between">
           <span className="font-display text-5xl font-extrabold text-gradient">0{pack.number}</span>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">
-            <PlayCircle className="size-3.5 text-brand-400" aria-hidden /> {pack.lessons.length} vidéos
-          </span>
+          {PACKS_AVAILABLE ? (
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">
+              <PlayCircle className="size-3.5 text-brand-400" aria-hidden /> {pack.lessons.length} vidéos
+            </span>
+          ) : (
+            <span className="rounded-full bg-mtn/15 px-3 py-1 text-xs font-semibold text-mtn ring-1 ring-mtn/30">Bientôt</span>
+          )}
         </div>
         <h3 className="font-display text-xl font-bold text-balance">{pack.title}</h3>
         <p className="mt-2 text-sm leading-relaxed text-muted">{pack.subtitle}</p>
@@ -101,13 +106,77 @@ export function BundleCard() {
             <p className="inline-flex rounded-full bg-brand-400/15 px-3 py-1 text-sm font-semibold text-brand-300">
               Tu économises {formatFCFA(BUNDLE_SAVINGS)}
             </p>
-            <Link href={`/formations/${bundle.slug}`} className="btn-primary w-full justify-center">
-              Obtenir les 16 vidéos <ArrowRight className="size-4" aria-hidden />
-            </Link>
-            <p className="text-xs text-muted">Accès à vie · Paiement unique</p>
+            {PACKS_AVAILABLE ? (
+              <>
+                <Link href={`/formations/${bundle.slug}`} className="btn-primary w-full justify-center">
+                  Obtenir les 16 vidéos <ArrowRight className="size-4" aria-hidden />
+                </Link>
+                <p className="text-xs text-muted">Accès à vie · Paiement unique</p>
+              </>
+            ) : (
+              <>
+                <NotifyButton subject="le pack complet des 16 vidéos" />
+                <p className="text-xs text-muted">Bientôt disponible · Sois le premier informé</p>
+              </>
+            )}
           </div>
         </div>
       </div>
+    </Reveal>
+  );
+}
+
+/** Remplace le bouton d'achat tant qu'une formation n'est pas encore en vente. */
+export function NotifyButton({ subject, className = "" }: { subject: string; className?: string }) {
+  return (
+    <a
+      href={whatsappLink(`Bonjour Airgé, je veux être prévenu(e) dès que ${subject} sera disponible.`)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`btn-secondary w-full justify-center ${className}`}
+    >
+      Être prévenu(e) du lancement
+    </a>
+  );
+}
+
+/** Grande carte de mise en avant d'une formation spéciale (formation du mois). */
+export function SpecialCard({ special }: { special: Special }) {
+  return (
+    <Reveal>
+      <Link
+        href={`/formations/speciales/${special.slug}`}
+        className="group relative block overflow-hidden rounded-[2rem] p-px"
+      >
+        <div className="absolute inset-0 animate-shine bg-[linear-gradient(110deg,var(--color-brand-600),var(--color-brand-200),var(--color-brand-600),var(--color-brand-200))] bg-[length:200%_auto]" />
+        <div className="relative grid gap-8 overflow-hidden rounded-[calc(2rem-1px)] bg-surface p-6 sm:p-10 md:grid-cols-[1.4fr_1fr] md:items-center">
+          <div className="pointer-events-none absolute -top-24 -left-24 size-72 rounded-full bg-brand-500/15 blur-3xl" />
+          <div className="relative space-y-4">
+            <p className="eyebrow">
+              <Sparkles className="size-3.5" aria-hidden /> {special.badge}
+            </p>
+            <h3 className="font-display text-3xl font-extrabold text-balance sm:text-4xl">{special.title}</h3>
+            <p className="text-muted">{special.subtitle}</p>
+            <div className="flex flex-wrap gap-2">
+              {special.tools.map((t) => (
+                <span key={t} className="rounded-full bg-brand-400/10 px-3 py-1 text-xs font-semibold text-brand-200 ring-1 ring-brand-400/25">
+                  {t}
+                </span>
+              ))}
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1 text-xs font-medium text-muted">
+                <Clock className="size-3.5 text-brand-400" aria-hidden /> Vidéo de {special.duration}
+              </span>
+            </div>
+          </div>
+          <div className="relative space-y-4 rounded-3xl border border-line bg-ink/60 p-6 text-center">
+            <p className="font-display text-4xl font-extrabold text-gradient sm:text-5xl">{formatFCFA(special.price)}</p>
+            <span className="btn-primary w-full justify-center">
+              Voir la formation <ArrowRight className="size-4 transition group-hover:translate-x-1" aria-hidden />
+            </span>
+            <p className="text-xs text-muted">Accès immédiat et à vie · Orange Money, MoMo, carte</p>
+          </div>
+        </div>
+      </Link>
     </Reveal>
   );
 }

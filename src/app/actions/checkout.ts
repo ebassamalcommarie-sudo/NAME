@@ -5,7 +5,7 @@ import { CURRENCY, isProductId, products } from "@/content/catalogue";
 import { env, isPaymentConfigured } from "@/lib/env";
 import { getCurrentUser } from "@/lib/auth";
 import { initializePayment } from "@/lib/notchpay";
-import { getOwnedPackIds, newReference } from "@/lib/orders";
+import { getOwnedCourseIds, newReference } from "@/lib/orders";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export type CheckoutState = { error?: string } | undefined;
@@ -14,6 +14,9 @@ export async function startCheckout(_: CheckoutState, formData: FormData): Promi
   const productId = String(formData.get("productId") ?? "");
   const returnTo = String(formData.get("returnTo") ?? "/formations");
   if (!isProductId(productId)) return { error: "Produit introuvable." };
+  if (!products[productId].available) {
+    return { error: "Cette formation sera bientôt disponible. Écris-nous sur WhatsApp pour être prévenu(e) du lancement." };
+  }
   if (!isPaymentConfigured()) {
     return { error: "Le paiement en ligne sera disponible très bientôt. Écris-nous sur WhatsApp pour réserver ta place." };
   }
@@ -22,8 +25,8 @@ export async function startCheckout(_: CheckoutState, formData: FormData): Promi
   if (!user) redirect(`/connexion?next=${encodeURIComponent(returnTo.startsWith("/") ? returnTo : "/formations")}`);
 
   const product = products[productId];
-  const owned = await getOwnedPackIds(user.id);
-  if (product.packIds.every((id) => owned.has(id))) redirect("/mon-espace");
+  const owned = await getOwnedCourseIds(user.id);
+  if (product.courseIds.every((id) => owned.has(id))) redirect("/mon-espace");
 
   const reference = newReference();
   const db = createAdminClient();

@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
-import { products, type PackId, type ProductId } from "@/content/catalogue";
+import { products, type CourseId, type ProductId } from "@/content/catalogue";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { FAILED_STATUSES, PAID_STATUSES, retrievePayment } from "@/lib/notchpay";
 
@@ -24,10 +24,11 @@ export function newReference() {
   return `AIRGE-${Date.now().toString(36).toUpperCase()}-${randomBytes(4).toString("hex").toUpperCase()}`;
 }
 
-export async function getOwnedPackIds(userId: string): Promise<Set<PackId>> {
+/** Packs et formations spéciales auxquels l'élève a accès. */
+export async function getOwnedCourseIds(userId: string): Promise<Set<CourseId>> {
   const { data, error } = await createAdminClient().from("enrollments").select("pack_id").eq("user_id", userId);
   if (error) throw error;
-  return new Set((data ?? []).map((r) => r.pack_id as PackId));
+  return new Set((data ?? []).map((r) => r.pack_id as CourseId));
 }
 
 async function findOrder(reference: string) {
@@ -42,7 +43,8 @@ async function findOrder(reference: string) {
 
 async function grantAccess(order: Order) {
   const db = createAdminClient();
-  const rows = products[order.product_id].packIds.map((pack_id) => ({
+  // La colonne s'appelle pack_id mais contient aussi les formations spéciales.
+  const rows = products[order.product_id].courseIds.map((pack_id) => ({
     user_id: order.user_id,
     pack_id,
     order_id: order.id,
@@ -52,7 +54,7 @@ async function grantAccess(order: Order) {
 }
 
 /**
- * Vérifie le paiement auprès de Notch Pay et, s'il est confirmé, donne l'accès aux packs.
+ * Vérifie le paiement auprès de Notch Pay et, s'il est confirmé, donne l'accès aux formations achetées.
  * Peut être appelée plusieurs fois sans risque (retour client + webhook).
  */
 export async function confirmOrder(reference: string): Promise<{ status: OrderStatus | "not_found"; order?: Order }> {

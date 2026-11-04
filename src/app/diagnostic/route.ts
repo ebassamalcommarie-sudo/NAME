@@ -1,6 +1,7 @@
 import { connection } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { site } from "@/content/site";
+import { specials } from "@/content/catalogue";
 import { readSupabaseConfig } from "@/lib/supabase/config";
 
 // Page de vérification de la configuration : /diagnostic
@@ -58,7 +59,19 @@ export async function GET() {
     try {
       const db = createClient(url, secretKey, { auth: { persistSession: false } });
       const { error } = await db.from("orders").select("id", { head: true, count: "exact" });
-      if (!error) ok(true, "Base de données (tables créées)");
+      if (!error) {
+        ok(true, "Base de données (tables créées)");
+        // Essai d'enregistrement fictif (toujours refusé faute d'utilisateur) : le code d'erreur
+        // indique si la base accepte les formations spéciales.
+        const probe = await db.from("orders").insert({
+          user_id: "00000000-0000-0000-0000-000000000000",
+          email: "diagnostic@airge.local",
+          product_id: specials[0]?.id ?? "special-test",
+          amount: 1,
+          reference: `DIAG-${Date.now()}`,
+        });
+        ok(probe.error?.code !== "23514", "Base prête pour les formations spéciales", "colle le script supabase/migrations/002_formations_speciales.sql dans Supabase → SQL Editor → Run");
+      }
       else if (/fetch failed/i.test(error.message)) ok(false, "Base de données", "injoignable : même problème d'adresse que ci-dessus");
       else if (/relation|does not exist|schema cache/i.test(error.message)) ok(false, "Base de données", "les tables n'existent pas : refais l'étape SQL Editor → Run");
       else ok(false, "Clé secrète Supabase", `refusée (${error.message})`);

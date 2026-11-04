@@ -15,6 +15,7 @@ Site de l'agence + plateforme de formations vidéo, avec paiement par **Orange M
 | `/services` | Services de l'agence (devis via WhatsApp) |
 | `/formations` | Les 4 packs + le pack complet |
 | `/formations/[pack]` | Détail d'un pack et bouton d'achat |
+| `/formations/speciales/[formation]` | Page de vente d'une formation spéciale |
 | `/connexion`, `/inscription` | Comptes élèves |
 | `/mon-espace` | Formations achetées et progression |
 | `/mon-espace/[pack]/[vidéo]` | Lecteur vidéo |
@@ -25,6 +26,8 @@ Site de l'agence + plateforme de formations vidéo, avec paiement par **Orange M
 ## Modifier le contenu
 
 - Packs, vidéos et prix : `src/content/catalogue.ts`
+- Formations spéciales (formation du mois) : tableau `specials` dans `src/content/catalogue.ts`
+- Mettre les packs en vente : passer `PACKS_AVAILABLE` à `true` dans `src/content/catalogue.ts`
 - Services : `src/content/services.ts`
 - Questions fréquentes : `src/content/faq.ts`
 - Contacts et réseaux : variables `NEXT_PUBLIC_*` (voir `.env.example`)
@@ -34,6 +37,7 @@ Site de l'agence + plateforme de formations vidéo, avec paiement par **Orange M
 ### 1. Supabase (comptes + base de données)
 1. Crée un compte sur [supabase.com](https://supabase.com), puis un projet (région la plus proche : Europe).
 2. **SQL Editor → New query** : colle le contenu de `supabase/schema.sql` puis **Run**.
+   Base créée avant les formations spéciales : colle aussi `supabase/migrations/002_formations_speciales.sql`.
 3. **Authentication → URL Configuration** : mets l'adresse du site dans *Site URL* et ajoute `https://TON-DOMAINE/auth/callback` dans *Redirect URLs*.
 4. **Project Settings → API Keys** : récupère l'URL, la clé *publishable* et la clé *secret*.
 
